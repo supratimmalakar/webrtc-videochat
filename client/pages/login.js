@@ -4,9 +4,13 @@ import axios from 'axios'
 import { useRouter } from 'next/router';
 import Cookies from 'js-cookie';
 import Head from 'next/head';
+import { openToast, errorToast } from '../redux/toastReducer';
+import { useDispatch } from 'react-redux';
+
 
 function Login() {
     const router = useRouter();
+    const dispatch = useDispatch()
     const { register, handleSubmit } = useForm();
     const [loading, setLoading] = useState(false)
 
@@ -17,11 +21,19 @@ function Login() {
                 ...data
             })
             .then(res => {
-                Cookies.set('auth', res.data, { expires: 7 });
+                Cookies.set('auth', JSON.stringify(res.data), { expires: 7 });
+                dispatch(openToast({
+                    message: "Registered successfully!",
+                    severity: "success"
+                }))
                 setLoading(false)
                 router.push('/dashboard')
             })
             .catch(error => {
+                dispatch(openToast({
+                    message: error.response.data,
+                    severity: "error"
+                }))
                 setLoading(false)
             })
     }

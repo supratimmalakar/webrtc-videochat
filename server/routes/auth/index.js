@@ -53,12 +53,12 @@ router.post('/login', async (req, res) => {
             username: user.username,
             id: user._id
         }
-        const tokenObj = JSON.stringify({
+        const tokenObj = {
             token,
             user: {
                 ...userObj
             }
-        })
+        }
         res.status(200).json(tokenObj);
 
     }
