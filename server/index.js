@@ -30,14 +30,26 @@ mongoose.connect(
     .catch((err) => console.log(err))
 
 const socketToUser = new Map()
+const userToSocket = new Map()
+
+const setMap = (key, value) => {
+    socketToUser.set(key, value);
+    userToSocket.set(value, key);
+}
+
+const deleteMap = (socketId) => {
+    const user = socketToUser.get(socketId);
+    userToSocket.delete(user);
+    socketToUser.delete(socketId)
+}
     
 io.on('connection', (socket) => {
-    socket.on('create-new-meeting', (user, callback) => {
+    socket.on('create-new-meeting', (user ,callback) => {
         try {
             const roomId = uuid.generate();  
             socket.join(roomId);
             socket.roomId = roomId
-            socketToUser.set(socket.id, user)
+            setMap(socket.id, user)
             callback({status : 1, roomId})
         }
         catch (err) {
@@ -45,25 +57,31 @@ io.on('connection', (socket) => {
         }
 
     })
-    socket.on("join-room", (roomId, user, callback) => {
+
+    socket.on("join-room", (roomId, user , callback) => {
         if (io.sockets.adapter.rooms.get(roomId)) {
             socket.join(roomId)
             socket.roomId = roomId
-            socketToUser.set(socket.id, user)
+            setMap(socket.id, user)
             socket.to(roomId).emit('user-joined', user)
+            callback({message : null})
         }
+        else callback({message : "Please enter a valid roomid"})
     })
 
     socket.on('get-room-clients', (roomId, callback) => {
-        console.log(roomId)
+        if (!io.sockets.adapter.rooms.get(roomId)) return;
         const clients = Array.from(io.sockets.adapter.rooms.get(roomId))
         const users = clients.map(client => socketToUser.get(client))
-        console.log(users)
-        callback({clients, users})
+        callback(users)
     })
+
     socket.on('disconnect', (reason) => {
         if (socket.roomId) {
-            socket.to(socket.roomId).emit("user-left", socketToUser.get(socket.id))
+            const user = socketToUser.get(socket.id);
+            socket.leave(socket.roomId)
+            deleteMap(socket.id)
+            socket.to(socket.roomId).emit("user-left", user)
         }
     })
 })

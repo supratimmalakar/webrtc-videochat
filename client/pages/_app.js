@@ -4,14 +4,17 @@ import { Provider } from 'react-redux'
 import { store } from '../redux/index'
 import Toast from '../components/Toast'
 
+
 function MyApp({ Component, pageProps }) {
+
+
   return (
-    <SocketProvider>
-      <Provider store={store}>
-        <Toast/>
+    <Provider store={store}>
+      <SocketProvider>
+        <Toast />
         <Component {...pageProps} />
-      </Provider>
-    </SocketProvider>
+      </SocketProvider>
+    </Provider>
   )
 }
 
